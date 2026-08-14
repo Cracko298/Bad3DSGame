@@ -7,13 +7,13 @@
 - Well this is ***kind-of*** a "port" or "demake".
   - However this uses a total of 0% of the original codebase. It wasn't even peaked at tbf-
 - I did this out of both Curiosity and obsession for the original game.
-  - I LOVED playing it on my PC, and I still play it on my Phone.
+  - I LOVED playing it on my PC as a kid, and I still play it on my Phone-
   - So I took that fun I was having and took it too the 3DS, and after quite a bit of time we arrived here.
 
  ## Download(s):
  - Currently not Avaliable via UDB and Universal-Updater.
- - Download Directly via this GitHub releases link [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.1.0/Bad3DSGame.3dsx)
- - If you would like the debug-able `*.elf` Binary you can find that [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.1.0/Bad3DSGame.elf)
+ - Download Directly via this GitHub releases link [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.1.0/Bad3DSGame.3dsx).
+ - If you would like the debug-able `*.elf` Binary you can find that [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.1.0/Bad3DSGame.elf).
 
 ## Additions:
 - I added alot of customizations... like alot alot- like wayyy too much x) and perks as well for more expensive items...

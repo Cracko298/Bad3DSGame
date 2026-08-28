@@ -1,0 +1,8 @@
+#include "render/game_render_background.inc"
+#include "render/game_render_world.inc"
+#include "render/game_render_title.inc"
+#include "render/game_render_settings.inc"
+#include "render/game_render_status.inc"
+#include "render/game_render_shop.inc"
+#include "render/game_render_top.inc"
+#include "render/game_render_bottom.inc"

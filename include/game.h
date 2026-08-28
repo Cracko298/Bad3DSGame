@@ -6,8 +6,8 @@
 #include "physics.h"
 #include "render.h"
 
-#define MAX_BLOCKS 224
-#define MAX_PARTICLES 144
+#define MAX_BLOCKS 256
+#define MAX_PARTICLES 192
 #define MAX_BULLETS 32
 #define MAX_POPUPS 16
 #define MAX_STARS 28
@@ -52,16 +52,16 @@ typedef struct {
     RigidBody body;
     Vec2 home;
 
-    /* Physics size stays fixed; visuals pulse independently. */
+    
     float half;
     float base_half;
 
-    /* Small visual breathing/rotation animation. */
+    
     float angle;
     float angular_velocity;
     float anim_phase;
 
-    /* Section ownership for off-screen chunk streaming. */
+    
     int section_x;
     int section_y;
     bool streamed;
@@ -117,27 +117,27 @@ typedef struct {
     uint32_t high_score;
     uint32_t best_distance;
 
-    /* Persistent skill progression. Level 1 is the default. */
+    
     uint32_t xp;
     uint32_t player_level;
 
-    /*
-       Cosmetic IDs 0..63 use cosmetic_owned.
-       Cosmetic IDs 64..127 use cosmetic_owned2.
-    */
+    
+
+
+
     uint64_t cosmetic_owned;
     uint64_t cosmetic_owned2;
 
     uint32_t lifetime_destroyed;
     uint32_t best_speed;
     uint32_t best_combo;
-    uint32_t missions_claimed;   /* Repeatable missions completed. */
+    uint32_t missions_claimed;   
     uint32_t total_distance_traveled;
 
-    /* Equipped cosmetic style IDs. */
+    
     uint8_t player_style;
     uint8_t rope_style;
-    uint8_t pattern_style;       /* Rope animation / FX. */
+    uint8_t pattern_style;       
     uint8_t shape_style;
     uint8_t player_anim_style;
     uint8_t hat_style;
@@ -150,14 +150,26 @@ typedef struct {
 
     uint8_t levels[SHOP_ITEM_COUNT];
 
-    /*
-       Persistent presentation/audio settings.
-       settings_reserved is a validity marker so "all toggles off" is still
-       distinct from a pre-settings save.
-    */
+    
+
+
+
+
     uint8_t settings_flags;
-    uint8_t bloom_level;      /* 0..4; default 3 */
-    uint8_t force_lod;        /* 0=AUTO, 1=LOD0, 2=LOD1, 3=LOD2 */
+
+    
+
+
+
+
+    uint8_t bloom_level_legacy;
+    uint8_t bloom_enabled;    
+    uint8_t bloom_radius;     
+    uint8_t bloom_intensity;  
+    uint8_t bloom_quads;      
+
+    uint8_t force_lod;        
+    uint8_t fps_limit;        
     uint8_t settings_reserved;
 } Progress;
 
@@ -195,52 +207,52 @@ typedef struct {
     Star stars[MAX_STARS];
     Rope rope;
 
-    /*
-       2D scrolling world. camera_x/camera_y are the world coordinates of
-       the top-left of the top LCD.
-    */
+    
+
+
+
     float camera_x;
     float camera_y;
 
-    /*
-       1.0 = normal 400x240 world view.
-       Higher values show a larger area of the world.
-    */
+    
+
+
+
     float camera_zoom;
 
     float highest_y;
     Vec2 aim_world;
     bool aim_valid;
 
-    /*
-       Sections are generated well outside the visible screen. The current
-       visible area is never populated in the middle of a flight.
-    */
+    
+
+
+
     SectionStamp sections[MAX_SECTION_STAMPS];
     int section_center_x;
     int section_center_y;
 
-    /* Section cache ranges from 3x3 at 1x zoom to 7x7 near 3x zoom. */
+    
     int section_radius_x;
     int section_radius_y;
     bool section_cache_ready;
 
-    /* Fresh procedural-world seed for each run. */
+    
     uint32_t world_seed;
 
-    /* Smoothed visual speed deformation for the cyan player. */
+    
     float player_stretch;
 
-    /*
-       Current straight-line displacement from the run's starting point.
-       Distance is not accumulated path length.
-    */
+    
+
+
+
     float run_distance;
     float run_path_distance;
     Vec2 run_start_pos;
     Vec2 last_distance_sample;
 
-    /* The player begins standing on blocks[0]. It breaks after first hook. */
+    
     bool starter_platform_active;
 
     Progress progress;
@@ -250,17 +262,17 @@ typedef struct {
     int max_combo;
     int destroyed;
 
-    /* Per-run progression accounting. */
+    
     uint32_t run_xp_earned;
     uint32_t run_cash_earned;
 
-    /*
-       Count of normal non-Money-Boi kills in this run.
-       Every kill pays at least $1; every fifth gets a special bonus/chime.
-    */
+    
+
+
+
     uint32_t normal_cash_kills;
 
-    /* One-time performance bonus awarded at death. */
+    
     uint32_t run_end_xp_bonus;
     uint32_t run_end_cash_bonus;
 
@@ -272,16 +284,16 @@ typedef struct {
     float spawn_timer;
     float difficulty_time;
 
-    /*
-       Adaptive nine-shot spray timer.
+    
 
-       The timer drains faster from a combination of:
-         - BULLETS upgrade level,
-         - active combo,
-         - current horizontal speed.
 
-       It is therefore a timer, but not a fixed "every N seconds" cooldown.
-    */
+
+
+
+
+
+
+
     float bullet_timer;
 
     float screen_shake;
@@ -292,11 +304,14 @@ typedef struct {
     int pause_index;
     int gameover_index;
 
-    /* Two uncluttered settings pages, four rows each. */
+    
     int settings_page;
     int settings_index;
+    int settings_scroll;
+    bool reset_save_confirm;
+    int reset_save_choice;   
 
-    /* Shop page 0 is upgrades; later pages are cosmetic categories. */
+    
     int shop_page;
     int shop_index;
     float shop_select_anim;
@@ -334,3 +349,8 @@ void game_render_top(const Game *g, Surface *top);
 void game_render_bottom(const Game *g, Surface *bottom, const GameInput *in);
 
 bool game_wants_stereo_3d(const Game *g);
+int game_target_fps(const Game *g);
+bool game_bloom_enabled(const Game *g);
+int game_bloom_radius(const Game *g);
+int game_bloom_intensity(const Game *g);
+int game_bloom_quads(const Game *g);

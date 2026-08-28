@@ -17,6 +17,7 @@
 
 ## Additions:
 - I added alot of customizations... like alot alot- like wayyy too much x) and perks as well for more expensive items...
+<img width="400" height="225" alt="proj" src="https://github.com/user-attachments/assets/2b36cd97-aeb5-42a7-849e-96ed2d716b3c" />
 <img width="200" height="240" alt="_14 08 26_19 13 02 992" src="https://github.com/user-attachments/assets/c9a8c792-02eb-404f-bbc8-0a661433939a" />
 <img width="200" height="240" alt="_14 08 26_19 12 57 535" src="https://github.com/user-attachments/assets/d0a3f716-a6a2-408e-a13d-ad41f7787faf" />
 <img width="200" height="240" alt="_14 08 26_19 12 53 375" src="https://github.com/user-attachments/assets/0bcc8d2c-82aa-46bf-934f-15af2bd28793" />

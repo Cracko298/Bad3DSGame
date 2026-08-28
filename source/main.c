@@ -4,6 +4,7 @@
 #include "game.h"
 #include "render.h"
 #include "audio.h"
+#include "gpu_bloom.h"
 
 typedef struct {
     int x_dir;
@@ -36,8 +37,46 @@ static int repeat_axis(int dir, int *last_dir, int *hold_frames) {
     return 0;
 }
 
+
+static void clear_input_edges(GameInput *in) {
+    if (!in) return;
+    in->touch_down = false;
+    in->touch_up = false;
+    in->nav_x = 0;
+    in->nav_y = 0;
+    in->keys_down = 0;
+}
+
+static void wait_for_frame_limit(int target_fps,
+                                 unsigned *phase_45,
+                                 u64 frame_start_ms) {
+    unsigned target_ms = 0;
+
+    switch (target_fps) {
+        case 15:
+            target_ms = 66;
+            break;
+        case 30:
+            target_ms = 33;
+            break;
+        case 45:
+            target_ms = ((*phase_45 % 3u) == 2u) ? 33u : 16u;
+            ++(*phase_45);
+            break;
+        case 60:
+            target_ms = 16;
+            break;
+        case 0:
+        default:
+            return;
+    }
+
+    while ((unsigned)(osGetTime() - frame_start_ms) < target_ms)
+        gspWaitForVBlank();
+}
+
 int main(void) {
-    /* libctru BGR8 double buffering; CPU software surfaces are copied to framebuffers. */
+    
     gfxInitDefault();
 
     Surface top = {0};
@@ -51,26 +90,28 @@ int main(void) {
         return 1;
     }
 
+    bool gpu_backend = gpu_bloom_init();
+
     srand((unsigned)osGetTime());
 
     static Game game;
     game_init(&game);
 
-    /* Audio initialization occurs after three visible frames. */
+    
     bool audio_init_attempted = false;
     unsigned visible_frames = 0;
 
     NavRepeat nav = {0, 0, 0, 0};
     bool previous_touch = false;
     u64 previous_ms = osGetTime();
+    unsigned fps_45_phase = 0;
 
     while (aptMainLoop() && !game.request_exit) {
         u64 now_ms = osGetTime();
         float dt = (float)(now_ms - previous_ms) * 0.001f;
         previous_ms = now_ms;
-
-        /* Frame delta is clamped to 1/60 after stalls or invalid timing. */
-        if (dt <= 0.0f || dt > 0.050f) dt = 1.0f / 60.0f;
+        
+        if (dt <= 0.0f || dt > 0.125f) dt = 1.0f / 60.0f;
         hidScanInput();
         u32 down = hidKeysDown();
         u32 held = hidKeysHeld();
@@ -79,7 +120,7 @@ int main(void) {
         hidCircleRead(&cp);
 
         int dx = axis_dir(cp.dx);
-        /* Menu navigation uses -1 for up. */
+        
         int dy = -axis_dir(cp.dy);
 
         int nav_x = repeat_axis(dx, &nav.x_dir, &nav.x_hold);
@@ -107,49 +148,90 @@ int main(void) {
 
         GameMode mode_before_update = game.mode;
 
-        game_update(&game, &in, dt);
+        float remaining_dt = dt;
+        GameInput step_in = in;
+        int sim_steps = 0;
 
-        /* Entering a new run restarts music; unpausing does not. */
+        while (remaining_dt > 0.000001f && sim_steps < 8) {
+            float step_dt = remaining_dt > (1.0f / 60.0f)
+                ? (1.0f / 60.0f) : remaining_dt;
+
+            game_update(&game, &step_in, step_dt);
+            remaining_dt -= step_dt;
+            ++sim_steps;
+            clear_input_edges(&step_in);
+        }
+
+        
         if (game.mode == MODE_PLAYING &&
             mode_before_update != MODE_PLAYING &&
             mode_before_update != MODE_PAUSED) {
             audio_restart_music();
         }
 
-        /* Audio buffer maintenance runs once per frame. */
+        
         audio_update();
 
         game_render_top(&game, &top);
 
-        /* Gameplay bottom LCD redraws at 30 Hz except touch edges. */
-        if (game.mode != MODE_PLAYING ||
+        
+        bool bottom_changed =
+            game.mode != MODE_PLAYING ||
             (game.frame_counter & 1u) == 0u ||
-            in.touch_down || in.touch_up) {
+            in.touch_down || in.touch_up;
+
+        if (bottom_changed)
             game_render_bottom(&game, &bottom, &in);
-        }
 
         bool stereo_3d = game_wants_stereo_3d(&game);
         gfxSet3D(stereo_3d);
 
-        if (stereo_3d) {
-            float slider = osGet3DSliderState();
-            if (slider < 0.0f)
-                slider = 0.0f;
-            if (slider > 1.0f)
-                slider = 1.0f;
+        float slider = stereo_3d ? osGet3DSliderState() : 0.0f;
+        if (slider < 0.0f) slider = 0.0f;
+        if (slider > 1.0f) slider = 1.0f;
+        int shift = (int)(slider * 6.0f + 0.5f);
 
-            int shift = (int)(slider * 6.0f + 0.5f);
-            surface_present_shifted(&top, GFX_TOP, GFX_LEFT, -shift);
-            surface_present_shifted(&top, GFX_TOP, GFX_RIGHT, shift);
+        if (gpu_backend) {
+            
+            gpu_bloom_set_parameters(
+                game_bloom_enabled(&game),
+                game_bloom_radius(&game),
+                game_bloom_intensity(&game),
+                game_bloom_quads(&game)
+            );
+
+            gpu_bloom_present(
+                &top,
+                &bottom,
+                bottom_changed,
+                stereo_3d,
+                shift
+            );
         } else {
-            surface_present(&top, GFX_TOP);
+            
+            surface_apply_bloom(&top);
+            if (bottom_changed)
+                surface_apply_bloom(&bottom);
+
+            if (stereo_3d) {
+                surface_present_shifted(&top, GFX_TOP, GFX_LEFT, -shift);
+                surface_present_shifted(&top, GFX_TOP, GFX_RIGHT, shift);
+            } else {
+                surface_present(&top, GFX_TOP);
+            }
+
+            if (bottom_changed)
+                surface_present(&bottom, GFX_BOTTOM);
+
+            gfxFlushBuffers();
+            gfxSwapBuffers();
         }
 
-        surface_present(&bottom, GFX_BOTTOM);
-
-        gfxFlushBuffers();
-        gfxSwapBuffers();
-        gspWaitForVBlank();
+        wait_for_frame_limit(
+            game_target_fps(&game),
+            &fps_45_phase,
+            now_ms
+        );
 
         ++visible_frames;
 
@@ -164,6 +246,8 @@ int main(void) {
 
     audio_shutdown();
     game_shutdown(&game);
+    if (gpu_backend)
+        gpu_bloom_shutdown();
     surface_destroy(&top);
     surface_destroy(&bottom);
     gfxExit();

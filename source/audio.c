@@ -8,10 +8,6 @@
 
 #include "audio.h"
 
-/*
-   audio_assets.s directly embeds each BCWAV in .rodata with .incbin.
-   No generated DATA/bin2o object/header targets are needed.
-*/
 extern const u8 soundtrack_bcwav[];
 extern const u8 soundtrack_bcwav_end[];
 
@@ -115,10 +111,10 @@ typedef struct {
 
 static AudioState s_audio;
 
-/*
-   These survive audio_init(), which clears AudioState. Saved settings can be
-   applied during game_init() before NDSP is initialized.
-*/
+
+
+
+
 static bool s_sfx_enabled = true;
 static bool s_music_enabled = true;
 
@@ -199,9 +195,9 @@ static u32 dspadpcm_bytes_for_samples(u32 samples) {
     return (u32)bytes;
 }
 
-/* =========================================================
-   CWAV parser
-   ========================================================= */
+
+
+
 
 static bool parse_cwav_memory(
     CwavAsset *out,
@@ -673,9 +669,9 @@ static void free_asset(
     );
 }
 
-/* =========================================================
-   Software Nintendo GC/DSP-ADPCM decoder
-   ========================================================= */
+
+
+
 
 static void decoder_reset(
     DspDecoder *decoder,
@@ -869,9 +865,9 @@ static bool decode_entire_asset(
     return true;
 }
 
-/* =========================================================
-   NDSP PCM16 playback
-   ========================================================= */
+
+
+
 
 static void configure_pcm_channel(
     int channel,
@@ -1102,9 +1098,9 @@ static uint32_t coin_rng_next(void) {
     return x;
 }
 
-/* =========================================================
-   Public API
-   ========================================================= */
+
+
+
 
 bool audio_init(void) {
     memset(

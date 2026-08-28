@@ -9,18 +9,23 @@ typedef struct {
 } Color;
 
 typedef struct {
-    /* CPU-owned software framebuffer in native rotated BGR8 layout. */
+    
     uint8_t *pixels;
-
-    /* Logical landscape dimensions used by the game. */
+    
     int width;
     int height;
 
-    /* Native physical LCD dimensions: 240x400 or 240x320. */
     int fb_width;
     int fb_height;
 
     size_t byte_size;
+
+    uint8_t *bloom_pixels;
+    uint8_t *bloom_tmp;
+    int bloom_width;
+    int bloom_height;
+    size_t bloom_byte_size;
+    bool bloom_dirty;
 } Surface;
 
 static inline Color rgb(uint8_t r, uint8_t g, uint8_t b) {
@@ -33,6 +38,8 @@ void surface_destroy(Surface *s);
 void surface_present(const Surface *s, gfxScreen_t screen);
 void surface_present_shifted(const Surface *s, gfxScreen_t screen, gfx3dSide_t side, int shift_x);
 void surface_clear(Surface *s, Color c);
+
+void surface_apply_bloom(Surface *s);
 void draw_pixel(Surface *s, int x, int y, Color c);
 void draw_rect(Surface *s, int x, int y, int w, int h, Color c);
 void draw_rect_outline(Surface *s, int x, int y, int w, int h, Color c);
@@ -57,7 +64,7 @@ void draw_bloom_triangle(Surface *s,
                          Color core);
 void draw_glow_square(Surface *s, int cx, int cy, int half, Color core);
 
-/* Cheap additive software bloom used only for emissive gameplay objects. */
+
 void draw_bloom_line(Surface *s, int x0, int y0, int x1, int y1, Color core);
 void draw_bloom_rect(Surface *s, int cx, int cy, int half_w, int half_h, Color core);
 void draw_bloom_rotated_square(Surface *s, float cx, float cy, float half,
@@ -77,8 +84,23 @@ void draw_rotated_square(Surface *s, float cx, float cy, float half, float radia
 void draw_glow_rotated_square(Surface *s, float cx, float cy, float half, float radians, Color c);
 void draw_text(Surface *s, int x, int y, const char *text, int scale, Color c);
 void draw_text_center(Surface *s, int center_x, int y, const char *text, int scale, Color c);
+
+
+void draw_bloom_text_center_animated(Surface *s,
+                                     float center_x,
+                                     float y,
+                                     const char *text,
+                                     int scale,
+                                     float zoom,
+                                     float radians,
+                                     float swizzle,
+                                     float twist,
+                                     int bold_px,
+                                     unsigned bloom_strength_256,
+                                     Color c);
+
 int text_width(const char *text, int scale);
 
-/* Software-bloom strength/quality: 0=no halo, 4=maximum. */
+
 void render_set_bloom_level(int level);
 int render_get_bloom_level(void);

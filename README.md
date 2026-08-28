@@ -12,8 +12,8 @@
 
  ## Download(s):
  - Currently not Avaliable via UDB and Universal-Updater.
- - Download Directly via this GitHub releases link [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.1.0/Bad3DSGame.3dsx).
- - If you would like the debug-able `*.elf` Binary you can find that [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.1.0/Bad3DSGame.elf).
+ - Download Directly via this GitHub releases link [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.2.0/Bad3DSGame.3dsx).
+ - If you would like the debug-able `*.elf` Binary you can find that [Here](https://github.com/Cracko298/Bad3DSGame/releases/download/v0.2.0/Bad3DSGame.elf).
 
 ## Additions:
 - I added alot of customizations... like alot alot- like wayyy too much x) and perks as well for more expensive items...
